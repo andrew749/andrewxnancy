@@ -1,15 +1,9 @@
 import os
+import base64
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 # Salts should be randomly generated
-salt = os.urandom(16)
-# derive
-kdf = PBKDF2HMAC(
-    algorithm=hashes.SHA256(),
-    length=32,
-    salt=salt,
-    iterations=390000,
-)
+
 password = b"andrewxnan2022"
 message = b"""
 December 2022
@@ -55,27 +49,41 @@ Andrew
 P.S. You have permission from past Andrew to demand your letter from future Andrew if he ever misses one.
 
 """
-# message_padded = message + b" " * (16 - (len(message) % 16))
-# derived_key = kdf.derive(password)
-# # verify
-# kdf = PBKDF2HMAC(
-#     algorithm=hashes.SHA256(),
-#     length=32,
-#     salt=salt,
-#     iterations=390000,
-# )
-# kdf.verify(password, derived_key)
-# print(derived_key)
+message_padded = message + b" " * (16 - (len(message) % 16))
 
-# from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-# key = derived_key
-# iv = os.urandom(16)
-# cipher = Cipher(algorithms.AES(key), modes.CBC(iv))
-# encryptor = cipher.encryptor()
-# ct = encryptor.update(message_padded) + encryptor.finalize()
-# decryptor = cipher.decryptor()
-# message_decrypted = decryptor.update(ct) + decryptor.finalize()
-# print(f"Decrypted: {message_decrypted}")
+# Create Key
+salt = base64.b64encode(b"2022")
+key_length = 16 
+pbkdf_iterations = 2
+print(f"Salt: {salt}")
+kdf = PBKDF2HMAC(
+    algorithm=hashes.SHA256(),
+    length=key_length,
+    salt=salt,
+    iterations=pbkdf_iterations,
+)
+derived_key = kdf.derive(password)
+print(f"Derived key: {base64.b64encode(derived_key)}")
+# verify
+kdf = PBKDF2HMAC(
+    algorithm=hashes.SHA256(),
+    length=key_length,
+    salt=salt,
+    iterations=pbkdf_iterations,
+)
+kdf.verify(password, derived_key)
+
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+key = derived_key
+iv = b"0000000000000000"
+cipher = Cipher(algorithms.AES128(key), modes.CBC(iv))
+encryptor = cipher.encryptor()
+ct = encryptor.update(message_padded) + encryptor.finalize()
+
+print(f"Encrypted: {base64.b64encode(ct)}")
+decryptor = cipher.decryptor()
+message_decrypted = decryptor.update(ct) + decryptor.finalize()
+print(f"Decrypted: {message_decrypted}")
 
 
 import qrcode

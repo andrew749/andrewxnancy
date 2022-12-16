@@ -1,0 +1,12 @@
+.mainTitle {
+    text-align: center;
+}
+
+.mainBody {
+    background-color: papayawhip;
+}
+
+.letterContainer {
+    white-space: pre-line;
+    padding: 5px;
+}
