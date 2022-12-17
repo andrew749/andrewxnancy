@@ -106,7 +106,6 @@ function Article({article}) {
         const data = new FormData(event.target);
         const passwords = [data.get("question::first-date"), data.get("question::trip")].reverse();
         try {
-            var decrypted = article.encryptedLetter;
             const decrypted = decryptLettersRecursive(article.encryptedLetter, passwords);
             
             if (decrypted) {
@@ -121,7 +120,7 @@ function Article({article}) {
     };
     return (
         <div>
-            <QuestionBox passwordInputHandler={passwordInputHandler} />
+            {decryptedContent == null ? <QuestionBox passwordInputHandler={passwordInputHandler} /> : ""}
             <pre className={styles.letterContainer}>{decryptedContent}</pre>
             {decryptionError && <Alert key="error" variant="danger">
                 Incorrect!
