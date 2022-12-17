@@ -30,6 +30,3 @@ jobs:
         with:
           branch: gh-pages
           folder: out
-
-      - name: Deploy
-        # configure an external GitHub Pages deploy workflow here
