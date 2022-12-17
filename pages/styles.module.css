@@ -3,10 +3,11 @@
 }
 
 .mainBody {
-    background-color: papayawhip;
 }
 
 .letterContainer {
     white-space: pre-line;
     padding: 5px;
+    background-color: whitesmoke;
+    font-family: cursive;
 }

@@ -58,7 +58,7 @@ function decryptLettersRecursive(article, passwords) {
         }
         message = Base64.parse(decryptedJson.encoded);
     }
-    console.log(message);
+    return message;
 }
 
 function decryptLetter(encryptedContent, password) {
