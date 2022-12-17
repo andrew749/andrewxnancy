@@ -10,6 +10,7 @@ import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Form from 'react-bootstrap/Form';
 import Alert from 'react-bootstrap/Alert';
+import Collapse from 'react-bootstrap/Collapse';
 
 
 // Importing the Bootstrap CSS
@@ -100,6 +101,7 @@ function getArticleFromDb(articleName) {
 function Article({article}) {
     const [decryptedContent, updateDecryptedContent] = useState();
     const [decryptionError, updateDecryptionError] = useState();
+    const [showDecryptionSuccess, setShowDecryptionSuccess] = useState(false);
 
     const passwordInputHandler = (event) => {
         event.preventDefault();
@@ -111,6 +113,10 @@ function Article({article}) {
             if (decrypted) {
                 updateDecryptedContent(decrypted);
                 updateDecryptionError(null);
+                setShowDecryptionSuccess(true);
+                setTimeout(() => {
+                    setShowDecryptionSuccess(false);
+                }, 3000);
             }
             return decrypted;
         } catch (e) {
@@ -120,6 +126,13 @@ function Article({article}) {
     };
     return (
         <div>
+            <Collapse in={showDecryptionSuccess}>
+                <div>
+                    <Alert key="decryption-successful" variant="success">
+                        Succesfully Decrypted!
+                    </Alert>
+                </div>
+            </Collapse>
             {decryptedContent == null ? <QuestionBox passwordInputHandler={passwordInputHandler} /> : ""}
             <pre className={styles.letterContainer}>{decryptedContent}</pre>
             {decryptionError && <Alert key="error" variant="danger">
