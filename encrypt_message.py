@@ -2,9 +2,13 @@ import os
 import base64
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.primitives import padding
+
+import json
+
 # Salts should be randomly generated
 
-password = b"andrewxnan2022"
 message = b"""
 December 2022
 
@@ -49,48 +53,64 @@ Andrew
 P.S. You have permission from past Andrew to demand your letter from future Andrew if he ever misses one.
 
 """
-message_padded = message + b" " * (16 - (len(message) % 16))
+
+passwords = [b"teaspoon", b"tahoe"]
 
 # Create Key
 salt = base64.b64encode(b"2022")
+iv = b"0000000000000000"
 key_length = 16 
 pbkdf_iterations = 2
-print(f"Salt: {salt}")
-kdf = PBKDF2HMAC(
-    algorithm=hashes.SHA256(),
-    length=key_length,
-    salt=salt,
-    iterations=pbkdf_iterations,
-)
-derived_key = kdf.derive(password)
-print(f"Derived key: {base64.b64encode(derived_key)}")
-# verify
-kdf = PBKDF2HMAC(
-    algorithm=hashes.SHA256(),
-    length=key_length,
-    salt=salt,
-    iterations=pbkdf_iterations,
-)
-kdf.verify(password, derived_key)
 
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-key = derived_key
-iv = b"0000000000000000"
-cipher = Cipher(algorithms.AES128(key), modes.CBC(iv))
-encryptor = cipher.encryptor()
-ct = encryptor.update(message_padded) + encryptor.finalize()
+def gen_key(password):
+    kdf = PBKDF2HMAC(
+        algorithm=hashes.SHA256(),
+        length=key_length,
+        salt=salt,
+        iterations=pbkdf_iterations,
+    )
+    return kdf.derive(password)
+derived_keys = map(gen_key, passwords)
+
+
+# for password, derived_key in zip(passwords, derived_keys):
+#     kdf = PBKDF2HMAC(
+#         algorithm=hashes.SHA256(),
+#         length=key_length,
+#         salt=salt,
+#         iterations=pbkdf_iterations,
+#     )
+#     kdf.verify(password, derived_key)
+
+ct = message
+
+# multistage encryption
+derived_keys_list = list(derived_keys)
+for index, key in enumerate(derived_keys_list):
+    print(f"Encrypting with key {key}")
+    cipher = Cipher(algorithms.AES128(key), modes.CBC(iv))
+    encryptor = cipher.encryptor()
+    m = {
+        "index": index,
+        "encoded": base64.b64encode(ct).decode("utf-8"),
+    }
+    encoded_json = json.dumps(m)
+    padder = padding.PKCS7(128).padder()
+    message_encoded = padder.update(bytes(encoded_json, "utf-8")) + padder.finalize()
+    ct = encryptor.update(message_encoded) + encryptor.finalize()
 
 print(f"Encrypted: {base64.b64encode(ct)}")
-decryptor = cipher.decryptor()
-message_decrypted = decryptor.update(ct) + decryptor.finalize()
-print(f"Decrypted: {message_decrypted}")
+message_decrypted = ct
+for key in derived_keys_list[::-1]:
+    cipher = Cipher(algorithms.AES128(key), modes.CBC(iv))
+    decryptor = cipher.decryptor()
+    message_decrypted = decryptor.update(message_decrypted) + decryptor.finalize()
+    unpadder = padding.PKCS7(128).unpadder()
+    message_decrypted = unpadder.update(message_decrypted) + unpadder.finalize()
+    message = json.loads(message_decrypted.decode('utf-8'))
+    if (message['index'] > 0):
+        message_decrypted = base64.b64decode(message['encoded'])
+    else:
+        message_decrypted = json.loads(message_decrypted.decode('utf-8'))['encoded']
 
-
-import qrcode
-import math
-chunk_size = 2000
-num_parts = math.ceil(len(message)/ chunk_size)
-for i in range(math.ceil(len(message)/ chunk_size)):
-    print(f"Generating qrcode with {min(chunk_size, len(message) - (i * chunk_size))} bytes")
-    img = qrcode.make(bytes(f"Part {i + 1}/{num_parts}\n", encoding='utf-8') + message[i:i+chunk_size])
-    img.save(f"christmas-letter-{i}.png")
+print(f"Decrypted: {base64.b64decode(message_decrypted)}")
