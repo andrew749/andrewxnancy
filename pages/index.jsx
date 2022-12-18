@@ -203,8 +203,14 @@ const imgConfigIndex = {
     18: ImageConfig.ConfigLandscape,
     19: ImageConfig.ConfigLandscape,
     20: ImageConfig.ConfigPortrait,
+    21: ImageConfig.ConfigPortrait,
+    22: ImageConfig.ConfigPortrait,
+    23: ImageConfig.ConfigLandscape,
+    24: ImageConfig.ConfigLandscape,
+    25: ImageConfig.ConfigPortrait,
+    26: ImageConfig.ConfigPortrait,
 }  
-const photos = Array.from(new Array(20), (x, i) => {return {
+const photos = Array.from(new Array(27), (x, i) => {return {
     src: `/images/img${i}.jpeg`, 
     height: imgConfigIndex[i].height, 
     width: imgConfigIndex[i].width,
