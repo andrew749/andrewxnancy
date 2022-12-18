@@ -232,8 +232,11 @@ const photos = [
 export default function HomePage() {
 
     return (
-        <div>
-        <Gallery className={styles.imageBackground} photos={photos} direction={"column"}/>
+        <div className={styles.container}>
+        <div className={styles.imageBackground}>
+            <Gallery photos={photos} direction={"column"}/>
+            <Gallery photos={photos} direction={"column"}/>
+        </div>
         <Container className={styles.mainBody}>
             <Row>
                 <Header />
