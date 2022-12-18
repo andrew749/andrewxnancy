@@ -220,17 +220,18 @@ export default function HomePage() {
 
     return (
         <div className={styles.container}>
-        <div className={styles.imageBackground}>
-            <Gallery photos={photos} direction={"column"}/>
-            <Gallery photos={photos} direction={"column"}/>
-        </div>
-        <Container className={styles.mainBody}>
+            <div className={styles.imageBackground}>
+                <Gallery photos={photos} direction={"column"} />
+                <Gallery photos={photos} direction={"column"} />
+            </div>
+            <Container className={styles.mainBody}>
             <Row>
                 <Header />
             </Row>
             <Row>
                 <Article article={getArticleFromDb(2022)}/>
             </Row>
+            <audio src="audio/background.mp3" autoplay="true" muted controls></audio>
         </Container>
         </div>
     );
