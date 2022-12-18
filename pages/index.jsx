@@ -168,12 +168,46 @@ export async function getStaticProps(context) {
     return {
       props: {}, // will be passed to the page component as props
     }
-  }
+}
 
+class ImageConfig {
+    constructor(width, height) {
+        this.width = width;
+        this.height = height;
+    }
+
+    static ConfigLandscape = new ImageConfig(4, 3);
+
+    static ConfigPortrait = new ImageConfig(3, 4);
+}
+
+const imgConfigIndex = {
+    0: ImageConfig.ConfigLandscape,
+    1: ImageConfig.ConfigLandscape,
+    2: ImageConfig.ConfigLandscape,
+    3: ImageConfig.ConfigLandscape,
+    4: ImageConfig.ConfigLandscape,
+    5: ImageConfig.ConfigLandscape,
+    6: ImageConfig.ConfigLandscape,
+    7: ImageConfig.ConfigLandscape,
+    8: ImageConfig.ConfigPortrait,
+    9: ImageConfig.ConfigLandscape,
+    10: ImageConfig.ConfigLandscape,
+    11: ImageConfig.ConfigLandscape,
+    12: ImageConfig.ConfigLandscape,
+    13: ImageConfig.ConfigLandscape,
+    14: ImageConfig.ConfigLandscape,
+    15: ImageConfig.ConfigPortrait,
+    16: ImageConfig.ConfigLandscape,
+    17: ImageConfig.ConfigLandscape,
+    18: ImageConfig.ConfigLandscape,
+    19: ImageConfig.ConfigLandscape,
+    20: ImageConfig.ConfigPortrait,
+}  
 const photos = Array.from(new Array(20), (x, i) => {return {
     src: `/images/img${i}.jpeg`, 
-    height: 4, 
-    width: 3
+    height: imgConfigIndex[i].height, 
+    width: imgConfigIndex[i].width,
 }});
 
 export default function HomePage() {
