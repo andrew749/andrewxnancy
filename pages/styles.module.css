@@ -26,15 +26,15 @@
         transform: translateY(0px);
     }
     100% {
-        transform: translateY(-100%);
+        transform: translateY(-11314px);
     }
 }
 
 .imageBackground {
     position: relative;
-    height: 8155px;
+    height: 11314px;
     top: 0px;
-    animation: slide 150s infinite linear;
+    animation: slide 200s infinite linear;
 }
 
 .letterContainer {
