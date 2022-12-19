@@ -26,7 +26,7 @@
         transform: translateY(0px);
     }
     100% {
-        transform: translateY(-11314px);
+        transform: translateY(-100%);
     }
 }
 
@@ -34,7 +34,7 @@
     position: relative;
     height: 11314px;
     top: 0px;
-    animation: slide 200s infinite linear;
+    animation: slide 1000s infinite linear;
 }
 
 .letterContainer {
