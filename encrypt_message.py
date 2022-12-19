@@ -78,13 +78,17 @@ question_list = [
     Question("Where was our first date?", "teaspoon"),
     Question("Where was our first trip together?", "tahoe"),
     Question("What did you break on my car?", "handle"),
+    Question("What restaurant did we eat at on our second date?", "chipotle"),
+    Question("What anime hat did you get me on our third date?", "naruto"),
+    Question("What did you try on our first date that you became subsequently obsessed with?", "taiyaki"),
+    Question("What day of May was our first date on? (e.g. the thirteenth would be 13)", "15"),
 ]
 
 # Create Key
 salt = base64.b64encode(b"2022")
 iv = b"0000000000000000"
 key_length = 16 
-pbkdf_iterations = 2
+pbkdf_iterations = 2000
 
 def gen_key(password: str):
     kdf = PBKDF2HMAC(
@@ -133,6 +137,8 @@ for index, datum in enumerate(derived_datums_list):
         "encoded": base64.b64encode(ct).decode("utf-8"),
     })
 
+with open('encrypted_letter', 'w') as f:
+    f.write(base64.b64encode(bytes(ct, 'utf-8')).decode('utf-8'))
 print(f"Encrypted: {base64.b64encode(bytes(ct, 'utf-8'))}")
 message_decrypted = ct
 
@@ -140,10 +146,10 @@ message_decrypted = json.loads(ct)
 index = int(message_decrypted["index"])
 
 while index > 0:
-    key = derived_datums_list[index - 1].key 
+    key = gen_key(bytes(derived_datums_list[index - 1].question.answer, 'utf-8')) 
     cipher = Cipher(algorithms.AES128(key), modes.CBC(iv))
     decryptor = cipher.decryptor()
-    print(f"Processing index {index} {message_decrypted['question']}")
+    print(f"Processing index:{index} question:{message_decrypted['question']} password: {derived_datums_list[index - 1].question.answer}")
     message_decrypted = decryptor.update(base64.b64decode(message_decrypted["encoded"])) + decryptor.finalize()
     unpadder = padding.PKCS7(128).unpadder()
     message_decrypted = unpadder.update(message_decrypted) + unpadder.finalize()

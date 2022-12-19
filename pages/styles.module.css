@@ -23,18 +23,18 @@
 
 @keyframes slide {
     0% {
-        transform: translateY(-2500px);
+        transform: translateY(0px);
     }
     100% {
-        transform: translateY(0px);
+        transform: translateY(-100%);
     }
 }
 
 .imageBackground {
     position: relative;
-    height: 2500px;
+    height: 8155px;
     top: 0px;
-    animation: slide 90s infinite linear;
+    animation: slide 150s infinite linear;
 }
 
 .letterContainer {
