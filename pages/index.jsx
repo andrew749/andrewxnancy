@@ -114,7 +114,7 @@ function Article({articleName}) {
                 setShowDecryptionSuccess(false);
             }, 3000);
         }
-    });
+    }, [encryptedFrames]);
 
     const passwordInputHandler = (event) => {
         event.preventDefault();
