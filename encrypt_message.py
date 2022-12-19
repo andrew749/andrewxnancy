@@ -4,6 +4,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import padding
+from dataclasses import dataclass
 
 import json
 
@@ -54,7 +55,16 @@ P.S. You have permission from past Andrew to demand your letter from future Andr
 
 """
 
-passwords = [b"teaspoon", b"tahoe"]
+@dataclass
+class Question:
+    question: str
+    answer: str
+
+question_list = [
+    Question("Where was our first date?", "teaspoon"),
+    Question("Where was our first trip together?", "tahoe"),
+    Question("What did you break on my car?", "handle"),
+]
 
 # Create Key
 salt = base64.b64encode(b"2022")
@@ -62,7 +72,7 @@ iv = b"0000000000000000"
 key_length = 16 
 pbkdf_iterations = 2
 
-def gen_key(password):
+def gen_key(password: str):
     kdf = PBKDF2HMAC(
         algorithm=hashes.SHA256(),
         length=key_length,
@@ -70,47 +80,64 @@ def gen_key(password):
         iterations=pbkdf_iterations,
     )
     return kdf.derive(password)
-derived_keys = map(gen_key, passwords)
 
+@dataclass
+class DatumEncryptConfig:
+    """
+    Config for a specific datum that is needed to generate a record for encryption.
+    """
+    question: Question
+    key: str
 
-# for password, derived_key in zip(passwords, derived_keys):
-#     kdf = PBKDF2HMAC(
-#         algorithm=hashes.SHA256(),
-#         length=key_length,
-#         salt=salt,
-#         iterations=pbkdf_iterations,
-#     )
-#     kdf.verify(password, derived_key)
+def gen_datum(question: Question):
+    return DatumEncryptConfig(question=question, key = gen_key(bytes(question.answer, 'utf-8')))
 
-ct = message
+derived_datums = map(gen_datum, question_list)
+
+# First packet with unencrypted contents
+ct = json.dumps({
+    "index": 0,
+    "answer": base64.b64encode(message).decode("utf-8")
+})
 
 # multistage encryption
-derived_keys_list = list(derived_keys)
-for index, key in enumerate(derived_keys_list):
+derived_datums_list = list(derived_datums)
+
+for index, datum in enumerate(derived_datums_list):
+    key = datum.key
     print(f"Encrypting with key {key}")
     cipher = Cipher(algorithms.AES128(key), modes.CBC(iv))
     encryptor = cipher.encryptor()
-    m = {
-        "index": index,
-        "encoded": base64.b64encode(ct).decode("utf-8"),
-    }
-    encoded_json = json.dumps(m)
     padder = padding.PKCS7(128).padder()
-    message_encoded = padder.update(bytes(encoded_json, "utf-8")) + padder.finalize()
-    ct = encryptor.update(message_encoded) + encryptor.finalize()
 
-print(f"Encrypted: {base64.b64encode(ct)}")
+    ct = base64.b64encode(bytes(ct, 'utf-8'))
+    message_encoded = padder.update(ct) + padder.finalize()
+    ct = encryptor.update(message_encoded) + encryptor.finalize()
+    ct = json.dumps({
+        "index": index + 1,
+        "question": datum.question.question,
+        "encoded": base64.b64encode(ct).decode("utf-8"),
+    })
+
+print(f"Encrypted: {base64.b64encode(bytes(ct, 'utf-8'))}")
 message_decrypted = ct
-for key in derived_keys_list[::-1]:
+
+message_decrypted = json.loads(ct)
+index = int(message_decrypted["index"])
+
+while index > 0:
+    key = derived_datums_list[index - 1].key 
     cipher = Cipher(algorithms.AES128(key), modes.CBC(iv))
     decryptor = cipher.decryptor()
-    message_decrypted = decryptor.update(message_decrypted) + decryptor.finalize()
+    print(f"Processing index {index} {message_decrypted['question']}")
+    message_decrypted = decryptor.update(base64.b64decode(message_decrypted["encoded"])) + decryptor.finalize()
     unpadder = padding.PKCS7(128).unpadder()
     message_decrypted = unpadder.update(message_decrypted) + unpadder.finalize()
-    message = json.loads(message_decrypted.decode('utf-8'))
-    if (message['index'] > 0):
-        message_decrypted = base64.b64decode(message['encoded'])
+    message = json.loads(base64.b64decode(message_decrypted))
+    index = message["index"]
+    if (index > 0):
+        message_decrypted = message
     else:
-        message_decrypted = json.loads(message_decrypted.decode('utf-8'))['encoded']
+        message_decrypted = base64.b64decode(message["answer"])
 
-print(f"Decrypted: {base64.b64decode(message_decrypted)}")
+print(f"Decrypted: {message_decrypted}")
