@@ -32,9 +32,9 @@
 
 .imageBackground {
     position: relative;
-    height: 11314px;
+    height: 10500px;
     top: 0px;
-    animation: slide 1000s infinite linear;
+    animation: slide 1000s infinite alternate;
 }
 
 .letterContainer {
