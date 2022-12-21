@@ -3,13 +3,13 @@ import styles from './styles.module.css';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Gallery from 'react-photo-gallery';
-import ImageConfig from './image-config';
+import ImageConfig from './components/image-config';
 
 // Importing the Bootstrap CSS
 import 'bootstrap/dist/css/bootstrap.min.css';
 import React from 'react';
-import Article from './article';
-import Header from './header';
+import Article from './components/article';
+import Header from './components/header';
 
 export const getStaticProps: GetStaticProps = async () => {
     return {

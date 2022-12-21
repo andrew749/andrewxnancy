@@ -6,7 +6,7 @@ import { getArticleFromDb } from "./data-util";
 import QuestionForm from "./question-form";
 import Base64 from 'crypto-js/enc-base64';
 import Utf8 from 'crypto-js/enc-utf8';
-import styles from './styles.module.css';
+import styles from '../styles.module.css';
 
 export default function Article({articleName}) {
     const [decryptedContent, updateDecryptedContent] = useState<string | null>();
