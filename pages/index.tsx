@@ -1,209 +1,20 @@
 import { GetStaticProps } from 'next';
-var CryptoJS = require("crypto-js");
-import {PBKDF2, AES} from 'crypto-js';
-import Base64 from 'crypto-js/enc-base64';
-import Utf8 from 'crypto-js/enc-utf8';
-import { useState, useEffect } from 'react';
-import Head from 'next/head';
 import styles from './styles.module.css';
-import Button from 'react-bootstrap/Button';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
-import Form from 'react-bootstrap/Form';
-import Alert from 'react-bootstrap/Alert';
-import Collapse from 'react-bootstrap/Collapse';
 import Gallery from 'react-photo-gallery';
-
+import ImageConfig from './image-config';
 
 // Importing the Bootstrap CSS
 import 'bootstrap/dist/css/bootstrap.min.css';
 import React from 'react';
-
-function Header() {
-    return (
-        <div>
-            <Head>
-                <title>Andrew ❤️ Nancy</title>
-            </Head>
-            <h1 className={styles.mainTitle}>Andrew ❤️ Nancy 🤗</h1>
-        </div>
-    );
-}
-
-const ENCRYPTION_PARAMS = {
-    salt: "2022",
-    keySize: 128/32,
-    keyIterations: 2000,
-    iv: "0000000000000000"
-}
-
-/**
- * 
- * @param {*} datum JSON structured input frame.
- * @param {*} password Password to decrypt this json layer.
- * @returns 
- */
-function decryptLayer(datum: Datum, password: string) {
-    if (datum.index == 0 && datum as AnswerFrame) return {"index": 0, "answer": Utf8.stringify(Base64.parse((datum as AnswerFrame).answer))};
-    const encryptedFrame = datum as EncryptedFrame;
-    const decodedCt = Base64.parse(encryptedFrame.encoded);
-    const decrypted = decrypt(decodedCt, password);
-    const jsonRaw = Utf8.stringify(Base64.parse(Utf8.stringify(decrypted)));
-    return JSON.parse(jsonRaw);
-}
-
-
-function decrypt(encryptedContent, password) {
-    const salt = Base64.stringify(Utf8.parse(ENCRYPTION_PARAMS.salt));
-    const iv = Utf8.parse(ENCRYPTION_PARAMS.iv);
-
-    const key = PBKDF2(
-        password,
-        salt,
-        { keySize: ENCRYPTION_PARAMS.keySize, iterations: ENCRYPTION_PARAMS.keyIterations, hasher: CryptoJS.algo.SHA256 }
-    );
-
-    const cipherParams = CryptoJS.lib.CipherParams.create({
-        ciphertext: encryptedContent,
-        key: key,
-        iv: iv,
-        salt: salt,
-        algorithm: CryptoJS.algo.AES,
-        mode: CryptoJS.mode.CBC,
-        padding: CryptoJS.pad.PKCS7,
-        blockSize: 4
-    })
-
-    const decrypt = AES.decrypt(
-        cipherParams,
-        key,
-        {
-            keySize: ENCRYPTION_PARAMS.keySize,
-            iv: iv
-        }
-    );
-    return decrypt;
-}
-
-function getArticleFromDb(articleName: string): Promise<EncryptedFrame> {
-    return fetch(`/letters/${articleName}`).then((resp) => {
-            return resp.text();
-        }).then((text) => {
-            return Base64.parse(text);
-        }).then((b64) => {
-            return Utf8.stringify(b64);
-        }).then((utf) => {
-            return JSON.parse(utf);
-        }).then((json) => json as EncryptedFrame);
-}
-
-interface EncryptedFrame {
-    index: number,
-    encoded: string,
-    question: string,
-}
-
-interface AnswerFrame {
-    index: number,
-    answer: string,
-}
-
-type Datum = EncryptedFrame | AnswerFrame;
-
-function Article({articleName}) {
-    const [decryptedContent, updateDecryptedContent] = useState<string | null>();
-    const [decryptionError, updateDecryptionError] = useState<string | null>();
-    const [showDecryptionSuccess, setShowDecryptionSuccess] = useState<boolean>(false);
-    const [encryptedFrames, updateEncryptedFrames] = useState<Array<Datum>>([]);
-
-    useEffect(() => {
-        getArticleFromDb(articleName).then((resp) => {
-            updateEncryptedFrames([resp]);
-        })
-    }, []);
-
-    useEffect(() => {
-        if (encryptedFrames.length > 0 && encryptedFrames.at(-1) && (encryptedFrames.at(-1) as AnswerFrame)?.answer) {
-            updateDecryptedContent(Utf8.stringify(Base64.parse((encryptedFrames.at(-1) as AnswerFrame)?.answer)));
-            setShowDecryptionSuccess(true);
-            setTimeout(() => {
-                setShowDecryptionSuccess(false);
-            }, 3000);
-        }
-    }, [encryptedFrames]);
-
-    const passwordInputHandler = (event) => {
-        event.preventDefault();
-        const data = new FormData(event.target);
-        const nextIndexToDecrypt = encryptedFrames.length - 1;
-        const nextPassword = (data.get(nextIndexToDecrypt.toString()) as string)?.toLowerCase();
-        try {
-            const decryptedLayer = decryptLayer(encryptedFrames[nextIndexToDecrypt], nextPassword);
-            if (decryptedLayer) {
-                updateEncryptedFrames(encryptedFrames.concat(decryptedLayer));
-                updateDecryptionError(null);
-            }
-        } catch (e) {
-            console.error(e);
-            updateDecryptionError(e);
-        }
-    };
-    return (
-        <div>
-            <Collapse in={showDecryptionSuccess}>
-                <div>
-                    <Alert key="decryption-successful" variant="success">
-                        Succesfully Decrypted!
-                    </Alert>
-                </div>
-            </Collapse>
-            {decryptedContent == null && <QuestionForm encryptedFrames={encryptedFrames} passwordInputHandler={passwordInputHandler} />}
-            <pre className={styles.letterContainer}>{decryptedContent}</pre>
-            {decryptionError && <Alert key="error" variant="danger">
-                Incorrect!
-            </Alert>}
-        </div>
-    );
-}
-
-function QuestionForm({encryptedFrames, passwordInputHandler}) {
-    return (<div>
-        <Form onSubmit={passwordInputHandler}>
-            {encryptedFrames.map((element, index, array) =>
-                <QuestionBox key={index} index={index} encryptedFrames={encryptedFrames} />
-            )} 
-            <Button variant="primary" type="submit">Submit</Button>
-        </Form>
-    </div>);
-}
-
-function QuestionBox({ index, encryptedFrames }) {
-    return (
-        <Form.Group className="mb-3" controlId="formBasicAnswer">
-            <Form.Label>{encryptedFrames[index].question}</Form.Label>
-            <Form.Control name={index} type="answer" placeholder="Answer" />
-        </Form.Group>
-    );
-}
+import Article from './article';
+import Header from './header';
 
 export const getStaticProps: GetStaticProps = async () => {
     return {
       props: {}, // will be passed to the page component as props
     }
-}
-
-class ImageConfig {
-    width: number;
-    height: number;
-
-    constructor(width: number, height: number) {
-        this.width = width;
-        this.height = height;
-    }
-
-    static ConfigLandscape = new ImageConfig(4, 3);
-
-    static ConfigPortrait = new ImageConfig(3, 4);
 }
 
 const imgConfigIndex = {
@@ -268,8 +79,6 @@ const photos = Array.from(new Array(52), (x, i) => {return {
 }});
 
 export default function HomePage() {
-    
-
     return (
         <div className={styles.container}>
             <div className={styles.imageBackground}>
