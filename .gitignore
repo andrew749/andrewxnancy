@@ -4,3 +4,4 @@ node_modules/*
 share/
 .next/*
 .DS_Store
+next-env.d.ts

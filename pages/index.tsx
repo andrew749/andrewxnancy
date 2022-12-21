@@ -1,3 +1,4 @@
+import { GetStaticProps } from 'next';
 var CryptoJS = require("crypto-js");
 import {PBKDF2, AES} from 'crypto-js';
 import Base64 from 'crypto-js/enc-base64';
@@ -16,6 +17,7 @@ import Gallery from 'react-photo-gallery';
 
 // Importing the Bootstrap CSS
 import 'bootstrap/dist/css/bootstrap.min.css';
+import React from 'react';
 
 function Header() {
     return (
@@ -41,9 +43,10 @@ const ENCRYPTION_PARAMS = {
  * @param {*} password Password to decrypt this json layer.
  * @returns 
  */
-function decryptLayer(datum, password) {
-    if (datum.index == 0) return {"index": 0, "answer": Utf8.stringify(Base64.parse(datum.answer))};
-    const decodedCt = Base64.parse(datum.encoded);
+function decryptLayer(datum: Datum, password: string) {
+    if (datum.index == 0 && datum as AnswerFrame) return {"index": 0, "answer": Utf8.stringify(Base64.parse((datum as AnswerFrame).answer))};
+    const encryptedFrame = datum as EncryptedFrame;
+    const decodedCt = Base64.parse(encryptedFrame.encoded);
     const decrypted = decrypt(decodedCt, password);
     const jsonRaw = Utf8.stringify(Base64.parse(Utf8.stringify(decrypted)));
     return JSON.parse(jsonRaw);
@@ -82,7 +85,7 @@ function decrypt(encryptedContent, password) {
     return decrypt;
 }
 
-function getArticleFromDb(articleName) {
+function getArticleFromDb(articleName: string): Promise<EncryptedFrame> {
     return fetch(`/letters/${articleName}`).then((resp) => {
             return resp.text();
         }).then((text) => {
@@ -91,14 +94,27 @@ function getArticleFromDb(articleName) {
             return Utf8.stringify(b64);
         }).then((utf) => {
             return JSON.parse(utf);
-        });
+        }).then((json) => json as EncryptedFrame);
 }
 
+interface EncryptedFrame {
+    index: number,
+    encoded: string,
+    question: string,
+}
+
+interface AnswerFrame {
+    index: number,
+    answer: string,
+}
+
+type Datum = EncryptedFrame | AnswerFrame;
+
 function Article({articleName}) {
-    const [decryptedContent, updateDecryptedContent] = useState();
-    const [decryptionError, updateDecryptionError] = useState();
-    const [showDecryptionSuccess, setShowDecryptionSuccess] = useState(false);
-    const [encryptedFrames, updateEncryptedFrames] = useState([]);
+    const [decryptedContent, updateDecryptedContent] = useState<string | null>();
+    const [decryptionError, updateDecryptionError] = useState<string | null>();
+    const [showDecryptionSuccess, setShowDecryptionSuccess] = useState<boolean>(false);
+    const [encryptedFrames, updateEncryptedFrames] = useState<Array<Datum>>([]);
 
     useEffect(() => {
         getArticleFromDb(articleName).then((resp) => {
@@ -107,8 +123,8 @@ function Article({articleName}) {
     }, []);
 
     useEffect(() => {
-        if (encryptedFrames.length > 0 && encryptedFrames.at(-1).answer) {
-            updateDecryptedContent(Utf8.stringify(Base64.parse(encryptedFrames.at(-1).answer)));
+        if (encryptedFrames.length > 0 && encryptedFrames.at(-1) && (encryptedFrames.at(-1) as AnswerFrame)?.answer) {
+            updateDecryptedContent(Utf8.stringify(Base64.parse((encryptedFrames.at(-1) as AnswerFrame)?.answer)));
             setShowDecryptionSuccess(true);
             setTimeout(() => {
                 setShowDecryptionSuccess(false);
@@ -120,7 +136,7 @@ function Article({articleName}) {
         event.preventDefault();
         const data = new FormData(event.target);
         const nextIndexToDecrypt = encryptedFrames.length - 1;
-        const nextPassword = data.get(nextIndexToDecrypt).toLowerCase();
+        const nextPassword = (data.get(nextIndexToDecrypt.toString()) as string)?.toLowerCase();
         try {
             const decryptedLayer = decryptLayer(encryptedFrames[nextIndexToDecrypt], nextPassword);
             if (decryptedLayer) {
@@ -170,14 +186,17 @@ function QuestionBox({ index, encryptedFrames }) {
     );
 }
 
-export async function getStaticProps(context) {
+export const getStaticProps: GetStaticProps = async () => {
     return {
       props: {}, // will be passed to the page component as props
     }
 }
 
 class ImageConfig {
-    constructor(width, height) {
+    width: number;
+    height: number;
+
+    constructor(width: number, height: number) {
         this.width = width;
         this.height = height;
     }
