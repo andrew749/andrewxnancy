@@ -1,7 +1,7 @@
 import { Form } from "react-bootstrap";
 import React from 'react';
 
-type QuestionBoxProps = { index, encryptedFrames, ref, enabled }
+type QuestionBoxProps = { index, encryptedFrames, ref, enabled: boolean }
 
 export const QuestionBox = React.forwardRef<HTMLInputElement, QuestionBoxProps>((props, ref) => {
     return (

@@ -12,8 +12,9 @@ export default function QuestionForm({encryptedFrames, passwordInputHandler}: In
     }, [encryptedFrames]);
     return (<div>
         <Form onSubmit={passwordInputHandler}>
-            {encryptedFrames.map((_element, index, _array) =>
-                <QuestionBox key={index} enabled={encryptedFrames.length > index} ref={refs.at(index)} index={index} encryptedFrames={encryptedFrames} />
+            {encryptedFrames.map((_element, index, _array) =>{
+                return <QuestionBox key={index} enabled={_element.index == _array.at(-1).index} ref={refs.at(index)} index={index} encryptedFrames={encryptedFrames} />
+            }
             )} 
             <Button variant="primary" type="submit">Submit</Button>
         </Form>
