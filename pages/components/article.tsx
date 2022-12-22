@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Collapse, Alert } from "react-bootstrap";
-import { decryptLayer } from "./decryption-utils";
-import { Datum, AnswerFrame } from "./model";
-import { getArticleFromDb } from "./data-util";
+import { decryptLayer } from "../../util/decryption-utils";
+import { Datum, AnswerFrame } from "../../util/model";
+import { getArticleFromDb } from "../../util/data-util";
 import QuestionForm from "./question-form";
 import Base64 from 'crypto-js/enc-base64';
 import Utf8 from 'crypto-js/enc-utf8';

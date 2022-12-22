@@ -1,13 +1,16 @@
 import { Form } from "react-bootstrap";
 import React from 'react';
+import { Datum, EncryptedFrame } from "../../util/model";
 
-type QuestionBoxProps = { index, encryptedFrames, ref, enabled: boolean }
+type QuestionBoxProps = { index: number, encryptedFrames: Array<EncryptedFrame>, enabled: boolean }
 
-export const QuestionBox = React.forwardRef<HTMLInputElement, QuestionBoxProps>((props, ref) => {
-    return (
+const QuestionBox = React.forwardRef<HTMLInputElement, QuestionBoxProps>((props = {index: 0, encryptedFrames: [], enabled: true}, ref = null) => {
+    return props.encryptedFrames && props.encryptedFrames.length && (
         <Form.Group className="mb-3" controlId="formBasicAnswer">
             <Form.Label>{props.encryptedFrames[props.index].question}</Form.Label>
-            <Form.Control name={props.index} disabled={!props.enabled} ref={ref} type="answer" placeholder="Answer" />
+            <Form.Control name={`${props.index}`} disabled={!props.enabled} ref={ref} type="answer" placeholder="Answer" />
         </Form.Group>
     );
 })
+
+export default QuestionBox;

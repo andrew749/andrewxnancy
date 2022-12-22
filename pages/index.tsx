@@ -3,7 +3,7 @@ import styles from './styles.module.css';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Gallery from 'react-photo-gallery';
-import ImageConfig from './components/image-config';
+import ImageConfig from '../util/image-config';
 
 // Importing the Bootstrap CSS
 import 'bootstrap/dist/css/bootstrap.min.css';
