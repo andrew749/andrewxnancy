@@ -91,7 +91,7 @@ export default function HomePage() {
             <Row>
                 <Article articleName={"christmas_2022"}/>
             </Row>
-            <audio src="audio/background.mp3" autoPlay muted controls/>
+            <audio src="audio/background.mp3" autoPlay controls/>
         </Container>
         </div>
     );
